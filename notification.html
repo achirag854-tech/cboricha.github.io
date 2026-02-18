@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notification Center</title>
+
+<!-- jQuery + Validation -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/jquery.validation/1.19.5/jquery.validate.min.js"></script>
+
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+:root{
+--sidebar-width:170px;
+--sidebar-collapsed-width:75px;
+--layout-gap:16px;
+--transition:.3s ease;
+}
+
+body{background:#f8f9fa;overflow-x:hidden;transition:var(--transition);}
+
+/* SIDEBAR */
+.sidebar{
+width:var(--sidebar-width);
+height:100vh;
+position:fixed;
+background:#fff;
+border-right:1px solid #dee2e6;
+padding:20px 12px;
+transition:var(--transition);
+z-index:1000;
+}
+.sidebar.collapsed{width:var(--sidebar-collapsed-width);}
+.sidebar.collapsed .link-text,.sidebar.collapsed h4{display:none;}
+.sidebar .nav-link{
+padding:12px 15px;border-radius:8px;margin-bottom:6px;
+display:flex;align-items:center;color:#495057;
+}
+.sidebar .nav-link:hover{background:#f1f3f5;}
+.sidebar .nav-link.active{background:#0d6efd;color:#fff;}
+.sidebar .nav-link i{min-width:28px;font-size:1.2rem;}
+
+/* NAVBAR + CONTENT */
+.navbar{margin-left:calc(var(--sidebar-width)+var(--layout-gap));transition:var(--transition);}
+.content{margin-left:calc(var(--sidebar-width)+var(--layout-gap));padding:20px;transition:var(--transition);}
+.collapsed-margin{margin-left:calc(var(--sidebar-collapsed-width)+var(--layout-gap))!important;}
+
+@media(max-width:991px){
+.navbar,.content{margin-left:0!important;}
+.sidebar{left:-100%;}
+.sidebar.mobile-show{left:0;}
+}
+
+/* CARDS */
+.notif-card{border:none;border-radius:15px;background:#fff;}
+.notif-icon{
+width:40px;height:40px;border-radius:10px;
+display:flex;align-items:center;justify-content:center;
+}
+.bg-info-light{background:#e0f7fa;color:#00bcd4;}
+.bg-warning-light{background:#fff3e0;color:#ff9800;}
+.bg-danger-light{background:#ffebee;color:#f44336;}
+
+/* DARK */
+.dark-mode{background:#121212;color:#e0e0e0;}
+.dark-mode .sidebar,
+.dark-mode .navbar,
+.dark-mode .notif-card,
+.dark-mode .card{background:#1a1a1a;color:#e6e6e6;border-color:#2c2c2c;}
+.dark-mode .text-muted{color:#aaa!important;}
+.dark-mode .border{border-color:#333!important;}
+.dark-mode .bg-info-light{background:#083c44;color:#4dd0e1;}
+.dark-mode .bg-warning-light{background:#4a3b00;color:#ffca28;}
+.dark-mode .bg-danger-light{background:#4a0f12;color:#ef5350;}
+
+@keyframes slideIn{
+from{opacity:0;transform:translateX(20px);}
+to{opacity:1;transform:translateX(0);}
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+<h4 class="px-3 mb-4 text-primary fw-bold text-uppercase">Admin</h4>
+<ul class="nav flex-column">
+<li><a href="home.html" class="nav-link"><i class="bi bi-house"></i><span class="link-text ms-2">Home</span></a></li>
+<li><a href="customer.html" class="nav-link"><i class="bi bi-people"></i><span class="link-text ms-2">Customers</span></a></li>
+<li><a href="notification.html" class="nav-link"><i class="bi bi-bell"></i><span class="link-text ms-2">Notifications</span></a></li>
+<li class="mt-4"><a href="login.html" class="nav-link text-danger"><i class="bi bi-box-arrow-left"></i><span class="link-text ms-2">Logout</span></a></li>
+</ul>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar sticky-top bg-white shadow-sm px-3 py-2" id="navbar">
+<div class="container-fluid">
+<div class="d-flex gap-2">
+<button class="btn btn-light border" id="toggle-btn"><i class="bi bi-list"></i></button>
+<input class="form-control d-none d-md-block" placeholder="Search..." style="max-width:250px;">
+</div>
+
+<button class="btn btn-light border" onclick="toggleDark()">
+<i id="darkIcon" class="bi bi-moon-stars"></i>
+</button>
+</div>
+</nav>
+
+<!-- CONTENT -->
+<div class="content">
+<div class="container-fluid">
+
+<h3 class="fw-bold">Notification Center</h3>
+<p class="text-muted mb-4">Broadcast announcements and system alerts.</p>
+
+<div class="row g-4">
+
+<!-- FORM -->
+<div class="col-lg-5">
+<div class="card notif-card shadow-sm p-4">
+<h5 class="fw-bold mb-3"><i class="bi bi-send me-2"></i>Send Announcement</h5>
+
+<form id="notifForm">
+
+<div class="mb-3">
+<label>Alert Title</label>
+<input name="notifTitle" id="notifTitle" class="form-control">
+</div>
+
+<div class="mb-3">
+<label>Target Audience</label>
+<select name="notifTarget" id="notifTarget" class="form-select">
+<option>All Users</option>
+<option>Only Admins</option>
+<option>New Members</option>
+</select>
+</div>
+
+<div class="mb-3">
+<label>Priority</label><br>
+<input type="radio" name="prio" value="info" checked> Info
+<input type="radio" name="prio" value="warning"> Warning
+<input type="radio" name="prio" value="danger"> Urgent
+</div>
+
+<div class="mb-3">
+<label>Message</label>
+<textarea name="notifBody" id="notifBody" rows="4" class="form-control"></textarea>
+</div>
+
+<button class="btn btn-primary w-100 fw-bold">Send Notification</button>
+</form>
+</div>
+</div>
+
+<!-- HISTORY -->
+<div class="col-lg-7">
+<div class="card shadow-sm p-4">
+<h5 class="fw-bold mb-3">Sent History</h5>
+<div id="notifHistory"></div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* ===== VALIDATION ===== */
+$("#notifForm").validate({
+rules:{
+notifTitle:{required:true,minlength:3},
+notifBody:{required:true,minlength:10}
+},
+submitHandler:pushNotification,
+errorClass:"is-invalid",
+validClass:"is-valid",
+errorPlacement:(e,el)=>{e.addClass("invalid-feedback");el.after(e);}
+});
+
+/* SAFE TEXT */
+function safe(t){return $("<div>").text(t).html();}
+
+/* PUSH */
+function pushNotification(){
+const title=safe(notifTitle.value);
+const target=notifTarget.value;
+const prio=$('[name=prio]:checked').val();
+
+let color= prio==="danger"?"bg-danger-light":
+prio==="warning"?"bg-warning-light":"bg-info-light";
+
+let icon= prio==="danger"?"bi-exclamation-triangle-fill":
+prio==="warning"?"bi-bell-fill":"bi-info-circle-fill";
+
+$("#notifHistory").prepend(`
+<div class="d-flex align-items-center p-3 mb-3 border rounded-3 shadow-sm"
+style="animation:slideIn .3s ease-out;">
+<div class="notif-icon ${color} me-3">
+<i class="bi ${icon}"></i>
+</div>
+<div class="flex-grow-1">
+<h6 class="mb-0 fw-bold">${title}</h6>
+<small class="text-muted">Target: ${target} | Sent: Just now</small>
+</div>
+<button class="btn btn-sm btn-light" onclick="this.parentElement.remove()">
+<i class="bi bi-x-lg"></i>
+</button>
+</div>`);
+
+notifForm.reset();
+$("#notifForm").validate().resetForm();
+$(".form-control").removeClass("is-valid");
+}
+
+/* ===== SIDEBAR + DARK ===== */
+toggleBtn.onclick=()=>{
+if(innerWidth<992){sidebar.classList.toggle("mobile-show");return;}
+sidebar.classList.toggle("collapsed");
+navbar.classList.toggle("collapsed-margin");
+content.classList.toggle("collapsed-margin");
+};
+
+if(localStorage.theme==="dark"){
+document.body.classList.add("dark-mode");
+darkIcon.className="bi bi-sun";
+}
+
+function toggleDark(){
+document.body.classList.toggle("dark-mode");
+localStorage.theme=document.body.classList.contains("dark-mode")?"dark":"light";
+darkIcon.className=document.body.classList.contains("dark-mode")?"bi bi-sun":"bi bi-moon-stars";
+}
+
+/* ACTIVE MENU */
+let cur=location.pathname.split("/").pop();
+document.querySelectorAll(".sidebar a").forEach(a=>{
+if(a.getAttribute("href")===cur) a.classList.add("active");
+});
+</script>
+
+</body>
+</html>

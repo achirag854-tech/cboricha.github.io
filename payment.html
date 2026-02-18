@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Management</title>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+:root{
+--sidebar-width:170px;
+--sidebar-collapsed-width:75px;
+--layout-gap:16px;
+}
+
+body{background:#f8f9fa;overflow-x:hidden;}
+
+.sidebar{
+width:var(--sidebar-width);
+height:100vh;
+position:fixed;
+background:#fff;
+border-right:1px solid #dee2e6;
+padding:20px 12px;
+}
+.sidebar.collapsed{width:var(--sidebar-collapsed-width);}
+.sidebar.collapsed .link-text,.sidebar.collapsed h4{display:none;}
+.sidebar .nav-link{padding:12px 15px;border-radius:8px;margin-bottom:6px;display:flex;color:#495057;}
+.sidebar .nav-link.active{background:#0d6efd;color:#fff;}
+
+.navbar{margin-left:calc(var(--sidebar-width)+var(--layout-gap));}
+.content{margin-left:calc(var(--sidebar-width)+var(--layout-gap));padding:20px;}
+.collapsed-margin{margin-left:calc(var(--sidebar-collapsed-width)+var(--layout-gap))!important;}
+
+@media(max-width:991px){
+.navbar,.content{margin-left:0!important;}
+.sidebar{left:-100%;}
+.sidebar.mobile-show{left:0;}
+}
+
+.dark-mode{background:#121212;color:#e0e0e0;}
+.dark-mode .sidebar,
+.dark-mode .navbar,
+.dark-mode .card{background:#1a1a1a;color:#e6e6e6;border-color:#2c2c2c;}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+<h4 class="px-3 mb-4 text-primary fw-bold">Admin</h4>
+<a href="payment.html" class="nav-link"><i class="bi bi-credit-card"></i><span class="link-text ms-2">Payments</span></a>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar sticky-top bg-white shadow-sm px-3 py-2" id="navbar">
+<div class="container-fluid">
+<button class="btn btn-light border" id="toggle-btn"><i class="bi bi-list"></i></button>
+<button class="btn btn-light border ms-2" onclick="toggleDark()">
+<i id="darkIcon" class="bi bi-moon-stars"></i>
+</button>
+</div>
+</nav>
+
+<!-- CONTENT -->
+<div class="content">
+<div class="container-fluid">
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+<input id="searchInput" class="form-control" placeholder="Search" style="max-width:220px;">
+<select id="statusFilter" class="form-select" style="max-width:180px;">
+<option value="">All Status</option>
+<option>Paid</option>
+<option>Pending</option>
+<option>Failed</option>
+<option>Refunded</option>
+</select>
+</div>
+
+<div class="card shadow-sm">
+<div class="table-responsive">
+<table class="table table-hover mb-0">
+<thead class="table-light">
+<tr>
+<th>ID</th><th>Order</th><th>Name</th><th>Method</th>
+<th>Amount</th><th>Date</th><th>Status</th><th></th>
+</tr>
+</thead>
+<tbody id="payTable"></tbody>
+</table>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal fade" id="viewModal">
+<div class="modal-dialog">
+<div class="modal-content">
+<div class="modal-header">
+<h5>Payment Details</h5>
+<button class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body" id="modalBody"></div>
+</div>
+</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast position-fixed bottom-0 end-0 m-3" id="delToast">
+<div class="toast-body bg-danger text-white">Payment deleted</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+const payments=[
+{id:"PAY1001",order:"ORD1001",name:"Chirag",method:"UPI",amt:1299,date:"2026-02-10",status:"Paid"},
+{id:"PAY1002",order:"ORD1002",name:"John Doe",method:"Card",amt:2499,date:"2026-02-11",status:"Pending"},
+{id:"PAY1003",order:"ORD1003",name:"Priya",method:"NetBanking",amt:3999,date:"2026-02-12",status:"Failed"},
+{id:"PAY1004",order:"ORD1004",name:"Amit",method:"UPI",amt:999,date:"2026-02-13",status:"Refunded"}
+];
+
+function safe(t){return $("<div>").text(t).html();}
+
+function badge(s){
+return {
+Paid:"bg-success-subtle text-success",
+Pending:"bg-warning-subtle text-warning",
+Failed:"bg-danger-subtle text-danger",
+Refunded:"bg-secondary-subtle text-secondary"
+}[s];
+}
+
+function filtered(){
+let q=searchInput.value.toLowerCase();
+let f=statusFilter.value;
+return payments.filter(p=>
+(!f||p.status===f)&&
+(p.name.toLowerCase().includes(q)||
+p.order.toLowerCase().includes(q)||
+p.id.toLowerCase().includes(q)));
+}
+
+function render(){
+let rows=filtered();
+payTable.innerHTML=rows.map(p=>`
+<tr>
+<td>${safe(p.id)}</td>
+<td>${safe(p.order)}</td>
+<td>${safe(p.name)}</td>
+<td>${safe(p.method)}</td>
+<td>₹${p.amt.toLocaleString()}</td>
+<td>${p.date}</td>
+<td><span class="badge ${badge(p.status)}">${p.status}</span></td>
+<td class="text-center">
+<button class="btn btn-sm btn-outline-primary me-1" onclick="viewPay('${p.id}')">
+<i class="bi bi-eye"></i></button>
+<button class="btn btn-sm btn-outline-danger" onclick="delPay('${p.id}')">
+<i class="bi bi-trash"></i></button>
+</td>
+</tr>`).join("") ||
+`<tr><td colspan=8 class="text-center py-4 text-muted">No records</td></tr>`;
+}
+
+function viewPay(id){
+let p=payments.find(x=>x.id===id);
+modalBody.innerHTML=`
+<b>ID:</b> ${p.id}<br>
+<b>Order:</b> ${p.order}<br>
+<b>Name:</b> ${p.name}<br>
+<b>Method:</b> ${p.method}<br>
+<b>Amount:</b> ₹${p.amt}<br>
+<b>Status:</b> ${p.status}`;
+new bootstrap.Modal(viewModal).show();
+}
+
+function delPay(id){
+payments.splice(payments.findIndex(x=>x.id===id),1);
+render();
+new bootstrap.Toast(delToast).show();
+}
+
+searchInput.oninput=render;
+statusFilter.onchange=render;
+render();
+
+/* SIDEBAR */
+toggleBtn.onclick=()=>{
+if(innerWidth<992){sidebar.classList.toggle("mobile-show");return;}
+sidebar.classList.toggle("collapsed");
+navbar.classList.toggle("collapsed-margin");
+content.classList.toggle("collapsed-margin");
+};
+
+/* DARK */
+if(localStorage.theme==="dark"){
+document.body.classList.add("dark-mode");
+darkIcon.className="bi bi-sun";
+}
+function toggleDark(){
+document.body.classList.toggle("dark-mode");
+localStorage.theme=document.body.classList.contains("dark-mode")?"dark":"light";
+darkIcon.className=document.body.classList.contains("dark-mode")?"bi bi-sun":"bi bi-moon-stars";
+}
+
+/* ACTIVE LINK */
+let cur=location.pathname.split("/").pop();
+document.querySelectorAll(".sidebar a").forEach(a=>{
+if(a.getAttribute("href")===cur) a.classList.add("active");
+});
+</script>
+
+</body>
+</html>

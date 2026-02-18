@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+:root{
+--sidebar-width:170px;
+--sidebar-collapsed-width:75px;
+--layout-gap:16px;
+--transition:.3s ease;
+}
+
+body{
+background:#f8f9fa;
+overflow-x:hidden;
+transition:var(--transition);
+}
+
+/* SIDEBAR */
+.sidebar{
+width:var(--sidebar-width);
+height:100vh;
+position:fixed;
+background:#fff;
+border-right:1px solid #dee2e6;
+padding:20px 12px;
+transition:var(--transition);
+z-index:1000;
+}
+
+.sidebar.collapsed{width:var(--sidebar-collapsed-width);}
+.sidebar.collapsed .link-text,
+.sidebar.collapsed h4{display:none;}
+
+.sidebar .nav-link{
+padding:12px 15px;
+border-radius:8px;
+margin-bottom:6px;
+display:flex;
+align-items:center;
+color:#495057;
+}
+
+.sidebar .nav-link:hover{background:#f1f3f5;}
+.sidebar .nav-link.active{background:#0d6efd;color:#fff;}
+
+.sidebar .nav-link i{min-width:28px;font-size:1.2rem;}
+
+/* NAVBAR */
+.navbar{
+margin-left:calc(var(--sidebar-width)+var(--layout-gap));
+transition:var(--transition);
+}
+
+/* CONTENT */
+.content{
+margin-left:calc(var(--sidebar-width)+var(--layout-gap));
+padding:20px;
+transition:var(--transition);
+}
+
+.collapsed-margin{
+margin-left:calc(var(--sidebar-collapsed-width)+var(--layout-gap))!important;
+}
+
+/* MOBILE */
+@media(max-width:991px){
+.navbar,.content{margin-left:0!important;}
+.sidebar{left:-100%;}
+.sidebar.mobile-show{left:0;}
+}
+
+/* DARK MODE */
+.dark-mode{background:#121212;color:#e0e0e0;}
+.dark-mode .sidebar,
+.dark-mode .navbar,
+.dark-mode .card{background:#1a1a1a;color:#e6e6e6;border-color:#2c2c2c;}
+.dark-mode .nav-link{color:#cfcfcf;}
+.dark-mode .nav-link:hover{background:#2a2a2a;}
+.dark-mode .nav-link.active{background:#0d6efd;color:#fff;}
+.dark-mode .text-muted{color:#aaa!important;}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+<h4 class="px-3 mb-4 text-primary fw-bold text-uppercase">Admin</h4>
+
+<ul class="nav flex-column">
+<li><a href="home.html" class="nav-link"><i class="bi bi-house"></i><span class="link-text ms-2">Home</span></a></li>
+<li><a href="customer.html" class="nav-link"><i class="bi bi-people"></i><span class="link-text ms-2">Customers</span></a></li>
+<li><a href="product.html" class="nav-link"><i class="bi bi-box"></i><span class="link-text ms-2">Products</span></a></li>
+<li><a href="order.html" class="nav-link"><i class="bi bi-cart"></i><span class="link-text ms-2">Orders</span></a></li>
+<li><a href="offer.html" class="nav-link"><i class="bi bi-tag"></i><span class="link-text ms-2">Offers</span></a></li>
+<li><a href="payment.html" class="nav-link"><i class="bi bi-credit-card"></i><span class="link-text ms-2">Payments</span></a></li>
+<li><a href="notification.html" class="nav-link"><i class="bi bi-bell"></i><span class="link-text ms-2">Notifications</span></a></li>
+
+<li class="mt-4">
+<a href="login.html" class="nav-link text-danger">
+<i class="bi bi-box-arrow-left"></i>
+<span class="link-text ms-2">Logout</span>
+</a>
+</li>
+</ul>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar sticky-top bg-white shadow-sm px-3 py-2" id="navbar">
+<div class="container-fluid">
+
+<div class="d-flex align-items-center gap-2">
+<button class="btn btn-light border" id="toggle-btn">
+<i class="bi bi-list"></i>
+</button>
+<input class="form-control d-none d-md-block" placeholder="Search..." style="max-width:250px;">
+</div>
+
+<div class="d-flex align-items-center gap-3">
+
+<button class="btn btn-light border" onclick="toggleDark()">
+<i id="darkIcon" class="bi bi-moon-stars"></i>
+</button>
+
+<div class="dropdown">
+<button class="btn p-0 border-0 bg-transparent dropdown-toggle"
+data-bs-toggle="dropdown">
+<img src="sandiyo.jpg" width="40" height="40" class="rounded-circle border">
+</button>
+
+<ul class="dropdown-menu dropdown-menu-end shadow">
+<li class="px-3 py-2">
+<strong>Chirag Ahir</strong><br>
+<small class="text-muted">admin@gmail.com</small>
+</li>
+<li><hr class="dropdown-divider"></li>
+<li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+<li><a class="dropdown-item text-danger" href="#"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+</ul>
+</div>
+
+</div>
+</div>
+</nav>
+
+<!-- CONTENT -->
+<div class="content">
+<div class="container-fluid">
+
+<h3 class="fw-bold mb-4">Welcome Back, Admin</h3>
+
+<div class="row g-4">
+
+<div class="col-md-3">
+<div class="card shadow-sm rounded-4 p-3">
+<div class="d-flex align-items-center">
+<div class="bg-primary-subtle text-primary p-3 rounded-3 me-3">
+<i class="bi bi-people-fill fs-3"></i>
+</div>
+<div>
+<h6 class="text-muted mb-1">Total Users</h6>
+<h3 class="fw-bold mb-0">1,240</h3>
+</div>
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card shadow-sm rounded-4 p-3">
+<div class="d-flex align-items-center">
+<div class="bg-success-subtle text-success p-3 rounded-3 me-3">
+<i class="bi bi-currency-dollar fs-3"></i>
+</div>
+<div>
+<h6 class="text-muted mb-1">Revenue</h6>
+<h3 class="fw-bold mb-0">₹45,000</h3>
+</div>
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card shadow-sm rounded-4 p-3">
+<div class="d-flex align-items-center">
+<div class="bg-warning-subtle text-warning p-3 rounded-3 me-3">
+<i class="bi bi-cart-check fs-3"></i>
+</div>
+<div>
+<h6 class="text-muted mb-1">Orders</h6>
+<h3 class="fw-bold mb-0">158</h3>
+</div>
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card shadow-sm rounded-4 p-3">
+<div class="d-flex align-items-center">
+<div class="bg-info-subtle text-info p-3 rounded-3 me-3">
+<i class="bi bi-graph-up fs-3"></i>
+</div>
+<div>
+<h6 class="text-muted mb-1">Growth</h6>
+<h3 class="fw-bold mb-0">+18%</h3>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- Bootstrap JS (REQUIRED) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+const sidebar=document.getElementById('sidebar');
+const navbar=document.getElementById('navbar');
+const content=document.querySelector('.content');
+const toggleBtn=document.getElementById('toggle-btn');
+const darkIcon=document.getElementById('darkIcon');
+
+/* THEME RESTORE */
+if(localStorage.theme==="dark"){
+document.body.classList.add("dark-mode");
+darkIcon.className="bi bi-sun";
+}
+
+/* SIDEBAR TOGGLE */
+toggleBtn.onclick=()=>{
+if(window.innerWidth<992){
+sidebar.classList.toggle("mobile-show");
+return;
+}
+sidebar.classList.toggle("collapsed");
+navbar.classList.toggle("collapsed-margin");
+content.classList.toggle("collapsed-margin");
+};
+
+/* DARK MODE */
+function toggleDark(){
+document.body.classList.toggle("dark-mode");
+localStorage.theme=document.body.classList.contains("dark-mode")?"dark":"light";
+darkIcon.className=document.body.classList.contains("dark-mode")?"bi bi-sun":"bi bi-moon-stars";
+}
+
+/* AUTO CLOSE MOBILE SIDEBAR */
+document.querySelectorAll('.sidebar .nav-link').forEach(l=>{
+l.onclick=()=>{ if(window.innerWidth<992) sidebar.classList.remove("mobile-show"); }
+});
+
+/* ACTIVE MENU AUTO */
+let cur=location.pathname.split("/").pop();
+document.querySelectorAll(".sidebar a").forEach(a=>{
+if(a.getAttribute("href")===cur) a.classList.add("active");
+});
+</script>
+
+</body>
+</html>

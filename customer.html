@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Admin</title>
+
+<!-- jQuery + Validation -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/jquery.validation/1.19.5/jquery.validate.min.js"></script>
+
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+:root{
+--sidebar-width:170px;
+--sidebar-collapsed-width:75px;
+--layout-gap:16px;
+--transition:.3s ease;
+}
+
+body{background:#f8f9fa;overflow-x:hidden;transition:var(--transition);}
+.sidebar{width:var(--sidebar-width);height:100vh;position:fixed;background:#fff;border-right:1px solid #ddd;padding:20px 12px;transition:var(--transition);}
+.sidebar.collapsed{width:var(--sidebar-collapsed-width);}
+.sidebar.collapsed .link-text,.sidebar.collapsed h4{display:none;}
+.sidebar .nav-link{padding:12px 15px;border-radius:8px;margin-bottom:6px;color:#495057;display:flex;align-items:center;}
+.sidebar .nav-link:hover{background:#f1f3f5;}
+.sidebar .nav-link.active{background:#0d6efd;color:#fff;}
+
+.navbar{margin-left:calc(var(--sidebar-width)+var(--layout-gap));transition:var(--transition);}
+.content{margin-left:calc(var(--sidebar-width)+var(--layout-gap));padding:20px;}
+.collapsed-margin{margin-left:calc(var(--sidebar-collapsed-width)+var(--layout-gap))!important;}
+
+@media(max-width:991px){
+.navbar,.content{margin-left:0!important;}
+.sidebar{left:-100%;}
+.sidebar.mobile-show{left:0;}
+}
+
+/* DARK */
+.dark-mode{background:#121212;color:#e0e0e0;}
+.dark-mode .sidebar,.dark-mode .navbar,.dark-mode .card,.dark-mode .table{background:#1a1a1a;color:#e6e6e6;}
+.dark-mode .table td,.dark-mode .table th{border-color:#333;}
+.dark-mode .form-control{background:#2b2b2b;border-color:#444;color:#fff;}
+.dark-mode .badge.bg-secondary{background:#555!important;}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+<h4 class="px-3 mb-4 text-primary fw-bold">Admin</h4>
+<ul class="nav flex-column">
+<li><a href="home.html" class="nav-link"><i class="bi bi-house"></i><span class="link-text ms-2">Home</span></a></li>
+<li><a href="customer.html" class="nav-link"><i class="bi bi-people"></i><span class="link-text ms-2">Customers</span></a></li>
+<li><a href="product.html" class="nav-link"><i class="bi bi-box"></i><span class="link-text ms-2">Products</span></a></li>
+<li class="mt-3"><a href="login.html" class="nav-link text-danger"><i class="bi bi-box-arrow-left"></i><span class="link-text ms-2">Logout</span></a></li>
+</ul>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar sticky-top bg-white shadow-sm px-3" id="navbar">
+<div class="d-flex align-items-center gap-2">
+<button class="btn btn-light border" id="toggle-btn"><i class="bi bi-list"></i></button>
+<input class="form-control d-none d-md-block" placeholder="Search..." style="max-width:250px;">
+</div>
+
+<div class="d-flex gap-2">
+<button class="btn btn-light border" onclick="toggleDark()"><i id="darkIcon" class="bi bi-moon-stars"></i></button>
+</div>
+</nav>
+
+<!-- CONTENT -->
+<div class="content">
+<div class="card shadow-sm p-4">
+<div class="d-flex justify-content-between mb-3">
+<h3>Customer List</h3>
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#customerModal" onclick="resetForm()">
+<i class="bi bi-plus"></i> Add
+</button>
+</div>
+
+<table id="customerTable" class="table table-hover">
+<thead><tr>
+<th>ID</th><th>Name</th><th>Role</th><th>Email</th><th>City</th><th>Phone</th><th class="text-center">Action</th>
+</tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal fade" id="customerModal">
+<div class="modal-dialog">
+<div class="modal-content">
+<div class="modal-header bg-primary text-white">
+<h5 id="modalTitle">Add Customer</h5>
+<button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+</div>
+
+<form id="custForm">
+<div class="modal-body">
+<input type="hidden" id="editRowIndex">
+
+<div class="mb-3">
+<label>Name</label>
+<input name="customerName" id="customerName" class="form-control">
+</div>
+
+<div class="mb-3">
+<label>Role</label><br>
+<input type="radio" name="customerRole" value="Admin"> Admin
+<input type="radio" name="customerRole" value="User" checked> User
+</div>
+
+<div class="mb-3">
+<label>Email</label>
+<input name="customerEmail" id="customerEmail" class="form-control">
+</div>
+
+<div class="mb-3">
+<label>City</label>
+<input name="customerCity" id="customerCity" class="form-control">
+</div>
+
+<div class="mb-3">
+<label>Phone</label>
+<input name="customerNumber" id="customerNumber" class="form-control">
+</div>
+</div>
+
+<div class="modal-footer">
+<button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+<button class="btn btn-primary" id="saveBtn" type="submit">Save Customer</button>
+</div>
+</form>
+
+</div>
+</div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* ========= VALIDATION ========= */
+$("#custForm").validate({
+rules:{
+customerName:{required:true,minlength:3},
+customerRole:{required:true},
+customerEmail:{required:true,email:true},
+customerCity:{required:true},
+customerNumber:{required:true,digits:true,minlength:10,maxlength:10}
+},
+submitHandler:handleSave
+});
+
+/* ========= SAVE ========= */
+function safe(t){return t.replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function handleSave(){
+const name=safe(customerName.value);
+const role=document.querySelector('[name=customerRole]:checked').value;
+const email=safe(customerEmail.value);
+const city=safe(customerCity.value);
+const num=safe(customerNumber.value);
+const idx=editRowIndex.value;
+const tbody=customerTable.querySelector("tbody");
+
+if(idx===""){
+const row=tbody.insertRow();
+row.innerHTML=rowHTML(name,role,email,city,num);
+}else{
+let r=tbody.rows[idx];
+r.innerHTML=rowHTML(name,role,email,city,num);
+}
+
+reIndex();
+bootstrap.Modal.getInstance(customerModal).hide();
+resetForm();
+}
+
+/* ========= ROW HTML ========= */
+function rowHTML(n,r,e,c,p){
+return `
+<td></td>
+<td>${n}</td>
+<td><span class="badge ${r==="Admin"?"bg-primary":"bg-secondary"}">${r}</span></td>
+<td>${e}</td>
+<td>${c}</td>
+<td>${p}</td>
+<td class="text-center">
+<button class="btn btn-sm btn-info" onclick="editRow(this)"><i class="bi bi-pencil"></i></button>
+<button class="btn btn-sm btn-danger" onclick="deleteRow(this)"><i class="bi bi-trash"></i></button>
+</td>`;
+}
+
+/* ========= EDIT ========= */
+function editRow(btn){
+let r=btn.closest("tr");
+editRowIndex.value=r.rowIndex-1;
+customerName.value=r.cells[1].innerText;
+document.querySelector(`[name=customerRole][value="${r.cells[2].innerText}"]`).checked=true;
+customerEmail.value=r.cells[3].innerText;
+customerCity.value=r.cells[4].innerText;
+customerNumber.value=r.cells[5].innerText;
+modalTitle.innerText="Edit Customer";
+saveBtn.innerText="Update Customer";
+new bootstrap.Modal(customerModal).show();
+}
+
+/* ========= DELETE ========= */
+function deleteRow(btn){
+if(confirm("Delete?")){
+btn.closest("tr").remove();
+reIndex();
+}
+}
+
+/* ========= REINDEX ========= */
+function reIndex(){
+document.querySelectorAll("#customerTable tbody tr").forEach((r,i)=>{
+r.cells[0].innerText=i+1;
+});
+}
+
+/* ========= RESET ========= */
+function resetForm(){
+custForm.reset();
+$("#custForm").validate().resetForm();
+$(".form-control").removeClass("is-valid is-invalid");
+editRowIndex.value="";
+modalTitle.innerText="Add Customer";
+saveBtn.innerText="Save Customer";
+}
+
+/* ========= SIDEBAR ========= */
+toggleBtn.onclick=()=>{
+sidebar.classList.toggle("collapsed");
+navbar.classList.toggle("collapsed-margin");
+document.querySelector(".content").classList.toggle("collapsed-margin");
+};
+
+/* ========= DARK ========= */
+(function(){
+if(localStorage.theme==="dark"){document.body.classList.add("dark-mode");darkIcon.className="bi bi-sun";}
+})();
+function toggleDark(){
+document.body.classList.toggle("dark-mode");
+localStorage.theme=document.body.classList.contains("dark-mode")?"dark":"light";
+darkIcon.className=document.body.classList.contains("dark-mode")?"bi bi-sun":"bi bi-moon-stars";
+}
+
+/* ========= ACTIVE LINK ========= */
+let cur=location.pathname.split("/").pop();
+document.querySelectorAll(".sidebar a").forEach(a=>{
+if(a.getAttribute("href")===cur)a.classList.add("active");
+});
+
+/* SAMPLE DATA */
+["Chirag","John","Jane"].forEach((n,i)=>{
+customerTable.querySelector("tbody").insertAdjacentHTML("beforeend",
+rowHTML(n,"User",n+"@mail.com","City","9999999999"));
+});
+reIndex();
+</script>
+
+</body>
+</html>

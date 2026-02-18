@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offers & Promotions</title>
+
+<!-- jQuery + Validation -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/jquery.validation/1.19.5/jquery.validate.min.js"></script>
+
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+:root{
+--sidebar-width:170px;
+--sidebar-collapsed-width:75px;
+--layout-gap:16px;
+--transition:.3s ease;
+}
+
+body{background:#f8f9fa;overflow-x:hidden;transition:var(--transition);}
+
+/* SIDEBAR */
+.sidebar{
+width:var(--sidebar-width);
+height:100vh;
+position:fixed;
+background:#fff;
+border-right:1px solid #dee2e6;
+padding:20px 12px;
+transition:var(--transition);
+z-index:1000;
+}
+.sidebar.collapsed{width:var(--sidebar-collapsed-width);}
+.sidebar.collapsed .link-text,.sidebar.collapsed h4{display:none;}
+.sidebar .nav-link{padding:12px 15px;border-radius:8px;margin-bottom:6px;display:flex;align-items:center;color:#495057;}
+.sidebar .nav-link:hover{background:#f1f3f5;}
+.sidebar .nav-link.active{background:#0d6efd;color:#fff;}
+
+.navbar{margin-left:calc(var(--sidebar-width)+var(--layout-gap));transition:var(--transition);}
+.content{margin-left:calc(var(--sidebar-width)+var(--layout-gap));padding:20px;transition:var(--transition);}
+.collapsed-margin{margin-left:calc(var(--sidebar-collapsed-width)+var(--layout-gap))!important;}
+
+@media(max-width:991px){
+.navbar,.content{margin-left:0!important;}
+.sidebar{left:-100%;}
+.sidebar.mobile-show{left:0;}
+}
+
+/* OFFER UI */
+.offer-card{border:none;border-radius:15px;background:linear-gradient(45deg,#f8f9fa,#ffffff);}
+.promo-code{
+font-family:monospace;
+font-weight:bold;
+color:#0d6efd;
+background:#e7f1ff;
+padding:4px 8px;
+border-radius:5px;
+border:1px dashed #0d6efd;
+}
+
+/* DARK */
+.dark-mode{background:#121212;color:#e0e0e0;}
+.dark-mode .sidebar,
+.dark-mode .navbar,
+.dark-mode .card{background:#1a1a1a;color:#e6e6e6;border-color:#2c2c2c;}
+.dark-mode .promo-code{background:#0b223d;color:#6ea8fe;border-color:#6ea8fe;}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+<h4 class="px-3 mb-4 text-primary fw-bold text-uppercase">Admin</h4>
+<ul class="nav flex-column">
+<li><a href="home.html" class="nav-link"><i class="bi bi-house"></i><span class="link-text ms-2">Home</span></a></li>
+<li><a href="offer.html" class="nav-link"><i class="bi bi-tag"></i><span class="link-text ms-2">Offers</span></a></li>
+</ul>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar sticky-top bg-white shadow-sm px-3 py-2" id="navbar">
+<div class="container-fluid">
+<button class="btn btn-light border" id="toggle-btn"><i class="bi bi-list"></i></button>
+<button class="btn btn-light border" onclick="toggleDark()">
+<i id="darkIcon" class="bi bi-moon-stars"></i>
+</button>
+</div>
+</nav>
+
+<!-- CONTENT -->
+<div class="content">
+<div class="container-fluid">
+
+<h3 class="fw-bold">Promotions & Offers</h3>
+<p class="text-muted mb-4">Manage discount codes and campaigns.</p>
+
+<div class="row g-4">
+
+<!-- FORM -->
+<div class="col-lg-4">
+<div class="card offer-card shadow-sm p-3">
+<h5 class="fw-bold mb-3"><i class="bi bi-megaphone me-2"></i>Create Offer</h5>
+
+<form id="offerForm">
+
+<div class="mb-3">
+<label>Offer Title</label>
+<input name="offTitle" class="form-control">
+</div>
+
+<div class="mb-3">
+<label>Coupon Code</label>
+<input name="offCode" id="offCode" class="form-control">
+</div>
+
+<div class="row">
+<div class="col-6 mb-3">
+<label>Discount %</label>
+<input name="offPercent" type="number" class="form-control">
+</div>
+
+<div class="col-6 mb-3">
+<label>Min Purchase</label>
+<input name="offMin" type="number" class="form-control">
+</div>
+</div>
+
+<div class="mb-3">
+<label>Expiry Date</label>
+<input name="offExpiry" type="date" class="form-control">
+</div>
+
+<button class="btn btn-primary w-100 fw-bold">Launch Promotion</button>
+</form>
+</div>
+</div>
+
+<!-- TABLE -->
+<div class="col-lg-8">
+<div class="card shadow-sm p-4">
+<h5 class="fw-bold mb-3">Active Promotions</h5>
+
+<table class="table align-middle" id="offerTable">
+<thead class="table-light">
+<tr>
+<th>Offer</th><th>Code</th><th>Discount</th><th>Status</th><th></th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- Toast -->
+<div class="toast position-fixed bottom-0 end-0 m-3" id="okToast">
+<div class="toast-body bg-success text-white">Promotion launched</div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* AUTO UPPERCASE CODE */
+$("#offCode").on("input",function(){ this.value=this.value.toUpperCase(); });
+
+/* CUSTOM RULES */
+$.validator.addMethod("futureDate",v=> new Date(v)>new Date());
+$.validator.addMethod("couponFormat",v=> /^[A-Z0-9]{6,10}$/.test(v));
+
+/* VALIDATION */
+$("#offerForm").validate({
+rules:{
+offTitle:{required:true,minlength:3},
+offCode:{required:true,couponFormat:true},
+offPercent:{required:true,min:1,max:100},
+offExpiry:{required:true,futureDate:true}
+},
+submitHandler:addOffer
+});
+
+/* SAFE TEXT */
+function safe(t){return $("<div>").text(t).html();}
+
+/* ADD OFFER */
+function addOffer(){
+let t=safe(offTitle.value);
+let c=safe(offCode.value);
+let p=safe(offPercent.value);
+let e=safe(offExpiry.value);
+
+$("#offerTable tbody").prepend(`
+<tr>
+<td><strong>${t}</strong><br><small class="text-muted">Expires: ${e}</small></td>
+<td><span class="promo-code">${c}</span></td>
+<td class="text-success fw-bold">${p}% OFF</td>
+<td><span class="badge bg-success-subtle text-success">Active</span></td>
+<td><button class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()"><i class="bi bi-trash"></i></button></td>
+</tr>`);
+
+offerForm.reset();
+$("#offerForm").validate().resetForm();
+$(".form-control").removeClass("is-valid");
+
+new bootstrap.Toast(okToast).show();
+}
+
+/* SIDEBAR */
+toggleBtn.onclick=()=>{
+if(innerWidth<992){sidebar.classList.toggle("mobile-show");return;}
+sidebar.classList.toggle("collapsed");
+navbar.classList.toggle("collapsed-margin");
+content.classList.toggle("collapsed-margin");
+};
+
+/* DARK */
+if(localStorage.theme==="dark"){
+document.body.classList.add("dark-mode");
+darkIcon.className="bi bi-sun";
+}
+function toggleDark(){
+document.body.classList.toggle("dark-mode");
+localStorage.theme=document.body.classList.contains("dark-mode")?"dark":"light";
+darkIcon.className=document.body.classList.contains("dark-mode")?"bi bi-sun":"bi bi-moon-stars";
+}
+
+/* ACTIVE LINK */
+let cur=location.pathname.split("/").pop();
+document.querySelectorAll(".sidebar a").forEach(a=>{
+if(a.getAttribute("href")===cur) a.classList.add("active");
+});
+</script>
+
+</body>
+</html>

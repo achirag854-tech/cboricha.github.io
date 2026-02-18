@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Management</title>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/jquery.validation/1.19.5/jquery.validate.min.js"></script>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+:root{
+--sidebar-width:170px;
+--sidebar-collapsed-width:75px;
+--layout-gap:16px;
+}
+
+body{background:#f8f9fa;overflow-x:hidden;}
+
+.sidebar{width:var(--sidebar-width);height:100vh;position:fixed;background:#fff;border-right:1px solid #dee2e6;padding:20px 12px;}
+.sidebar.collapsed{width:var(--sidebar-collapsed-width);}
+.sidebar.collapsed .link-text,.sidebar.collapsed h4{display:none;}
+.sidebar .nav-link{padding:12px 15px;border-radius:8px;margin-bottom:6px;display:flex;align-items:center;color:#495057;}
+.sidebar .nav-link.active{background:#0d6efd;color:#fff;}
+
+.navbar{margin-left:calc(var(--sidebar-width)+var(--layout-gap));}
+.content{margin-left:calc(var(--sidebar-width)+var(--layout-gap));padding:20px;}
+.collapsed-margin{margin-left:calc(var(--sidebar-collapsed-width)+var(--layout-gap))!important;}
+
+@media(max-width:991px){
+.navbar,.content{margin-left:0!important;}
+.sidebar{left:-100%;}
+.sidebar.mobile-show{left:0;}
+}
+
+/* STATUS BADGES */
+.status-badge{padding:6px 12px;border-radius:20px;font-size:.85rem;font-weight:600;}
+.status-pending{background:#fff3cd;color:#856404;}
+.status-processing{background:#cce5ff;color:#004085;}
+.status-completed{background:#d4edda;color:#155724;}
+.status-cancelled{background:#f8d7da;color:#721c24;}
+
+@media print{
+.sidebar,.navbar,.btn,.action-column{display:none!important;}
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+<h4 class="px-3 mb-4 text-primary fw-bold">Admin</h4>
+<a href="order.html" class="nav-link"><i class="bi bi-cart"></i><span class="link-text ms-2">Orders</span></a>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar sticky-top bg-white shadow-sm px-3 py-2" id="navbar">
+<button class="btn btn-light border" id="toggle-btn"><i class="bi bi-list"></i></button>
+<button class="btn btn-light border ms-2" onclick="toggleDark()">
+<i id="darkIcon" class="bi bi-moon-stars"></i>
+</button>
+</nav>
+
+<!-- CONTENT -->
+<div class="content">
+<div class="d-flex justify-content-between mb-3">
+<h3>Order Management</h3>
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orderModal">+ Create Order</button>
+</div>
+
+<table class="table table-hover" id="orderTable">
+<thead class="table-light">
+<tr>
+<th>ID</th><th>Customer</th><th>Product</th><th>Amount</th><th>Status</th>
+<th class="action-column"></th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="modal fade" id="orderModal">
+<div class="modal-dialog">
+<div class="modal-content">
+<div class="modal-header bg-primary text-white">
+<h5>New Order</h5>
+<button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+</div>
+
+<form id="orderForm">
+<div class="modal-body">
+
+<div class="mb-3">
+<label>Customer</label>
+<input name="custName" class="form-control">
+</div>
+
+<div class="mb-3">
+<label>Product</label>
+<input name="prodName" class="form-control">
+</div>
+
+<div class="mb-3">
+<label>Amount</label>
+<input name="totalAmt" type="number" class="form-control">
+</div>
+
+<div class="mb-3">
+<label>Status</label>
+<select name="orderStat" class="form-select">
+<option value="">Select</option>
+<option>Pending</option>
+<option>Processing</option>
+<option>Completed</option>
+<option>Cancelled</option>
+</select>
+</div>
+
+</div>
+
+<div class="modal-footer">
+<button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+<button class="btn btn-primary">Create</button>
+</div>
+</form>
+
+</div>
+</div>
+</div>
+
+<!-- INVOICE MODAL -->
+<div class="modal fade" id="invoiceModal">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+<div class="modal-header bg-dark text-white">
+<h5>Invoice</h5>
+<button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body" id="invoiceBody"></div>
+<div class="modal-footer">
+<button class="btn btn-primary" onclick="window.print()">Print</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast position-fixed bottom-0 end-0 m-3" id="okToast">
+<div class="toast-body bg-success text-white">Order created</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+function safe(t){return $("<div>").text(t).html();}
+
+/* VALIDATION */
+$("#orderForm").validate({
+rules:{
+custName:{required:true,minlength:3},
+prodName:{required:true,minlength:2},
+totalAmt:{required:true,min:1},
+orderStat:{required:true}
+},
+submitHandler:createOrder
+});
+
+function badgeClass(s){
+return {
+Pending:"status-pending",
+Processing:"status-processing",
+Completed:"status-completed",
+Cancelled:"status-cancelled"
+}[s];
+}
+
+function createOrder(){
+let name=safe(orderForm.custName.value);
+let prod=safe(orderForm.prodName.value);
+let amt=safe(orderForm.totalAmt.value);
+let stat=orderForm.orderStat.value;
+
+let id="#ORD-"+Math.floor(1000+Math.random()*9000);
+
+$("#orderTable tbody").prepend(`
+<tr>
+<td>${id}</td>
+<td><strong>${name}</strong></td>
+<td>${prod}</td>
+<td>₹${amt}</td>
+<td><span class="status-badge ${badgeClass(stat)}">${stat}</span></td>
+<td class="action-column">
+<button class="btn btn-sm btn-outline-primary" onclick="showInvoice(this)">Invoice</button>
+<button class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">Delete</button>
+</td>
+</tr>`);
+
+bootstrap.Modal.getInstance(orderModal).hide();
+orderForm.reset();
+$("#orderForm").validate().resetForm();
+$(".form-control").removeClass("is-valid");
+
+new bootstrap.Toast(okToast).show();
+}
+
+function showInvoice(btn){
+let r=btn.closest("tr").children;
+invoiceBody.innerHTML=`
+<p><b>${r[0].innerText}</b></p>
+<p>${r[1].innerText}</p>
+<table class="table">
+<tr><td>${r[2].innerText}</td><td class="text-end">${r[3].innerText}</td></tr>
+<tr><th>Total</th><th class="text-end">${r[3].innerText}</th></tr>
+</table>`;
+new bootstrap.Modal(invoiceModal).show();
+}
+
+/* SIDEBAR + DARK */
+toggleBtn.onclick=()=>{
+if(innerWidth<992){sidebar.classList.toggle("mobile-show");return;}
+sidebar.classList.toggle("collapsed");
+navbar.classList.toggle("collapsed-margin");
+content.classList.toggle("collapsed-margin");
+};
+
+if(localStorage.theme==="dark"){
+document.body.classList.add("dark-mode");
+darkIcon.className="bi bi-sun";
+}
+function toggleDark(){
+document.body.classList.toggle("dark-mode");
+localStorage.theme=document.body.classList.contains("dark-mode")?"dark":"light";
+darkIcon.className=document.body.classList.contains("dark-mode")?"bi bi-sun":"bi bi-moon-stars";
+}
+
+/* ACTIVE LINK */
+let cur=location.pathname.split("/").pop();
+document.querySelectorAll(".sidebar a").forEach(a=>{
+if(a.getAttribute("href")===cur) a.classList.add("active");
+});
+</script>
+
+</body>
+</html>
